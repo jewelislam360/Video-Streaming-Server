@@ -25,10 +25,8 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
-
-    const allMovieCollection = client
-      .db("videoStreamingDB")
-      .collection("allMovies");
+    const db = client.db("videoStreamingDB");
+    const allMovieCollection = db.collection("allMovies");
 
     app.get("/allMovies", async (req, res) => {
       const result = await allMovieCollection.find().toArray();
