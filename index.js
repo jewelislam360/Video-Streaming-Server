@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 5000;
 const app=express();
@@ -11,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nn2sj3o.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -26,7 +27,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
 
     const allMovieCollection = client.db("videoStreamingDB").collection("allMovies");
@@ -43,6 +44,23 @@ async function run() {
       console.log(result);
       res.send(result);
     })
+
+   
+//  search by text ---
+    app.get("/searchName/:text", async (req, res) => {
+      const indexKeys = { title: 1 };
+      const indexOptions = { title:"title" };
+      const result2 = await allMovieCollection.createIndex(indexKeys, indexOptions);
+      const text = req.params.text;
+      const result = await allMovieCollection
+        .find({
+          $or: [
+            { title: { $regex: text, $options: "i" } },
+          ],
+        })
+        .toArray();
+      res.send(result);
+    });
 
 
 
