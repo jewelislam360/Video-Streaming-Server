@@ -14,6 +14,8 @@ app.use(express.json());
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nn2sj3o.mongodb.net/?retryWrites=true&w=majority`;
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.mongodb_uri, {
   serverApi: {
@@ -43,6 +45,47 @@ async function run() {
     //message collection
     const messageCollection = db.collection("messages");
 
+    //--------------------//
+
+    //payment routes
+
+    app.get("/config", (req, res) => {
+      res.send({
+        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      });
+    });
+
+    app.post("/payment-success", async (req, res) => {
+      console.log(req.body, "payment -success line 59");
+    });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      // Create a PaymentIntent with the amount, currency, and a payment method type.
+      //
+      // See the documentation [0] for the full list of supported parameters.
+      //
+      // [0] https://stripe.com/docs/api/payment_intents/create
+      try {
+        // const amount = req.body.price * 100;
+        const paymentIntent = await stripe.paymentIntents.create({
+          currency: "usd",
+          amount: 1500,
+          automatic_payment_methods: { enabled: true },
+        });
+
+        // Send publishable key and PaymentIntent details to client
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      } catch (e) {
+        console.log(e, "line 77");
+        return res.status(400).send({
+          error: {
+            message: e.message,
+          },
+        });
+      }
+    });
     //--------------------//
 
     //users route start
