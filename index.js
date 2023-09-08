@@ -142,13 +142,13 @@ async function run() {
     });
 
     //post a new movie
-    app.post("/allMovies", jwtCheck, async (req, res) => {
+    app.post("/allMovies", async (req, res) => {
       const video = req.body;
       try {
         console.log(video, "video");
         const result = await allMovieCollection.insertOne({
           ...video,
-          createdAt: Date.now(),
+          createdAt: new Date(),
         });
         res.status(201).json(result);
       } catch (error) {
@@ -175,6 +175,27 @@ async function run() {
         res.status(200).json(result);
       } catch (error) {
         res.status(404).json({ message: error.message });
+      }
+    });
+
+    app.get("/aggregation", async (req, res) => {
+      try {
+        const result = await allMovieCollection
+          .aggregate([
+            {
+              $group: {
+                _id: { dayOfWeek: { $dayOfWeek: "$createdAt" } },
+                count: { $sum: 1 },
+              },
+            },
+          ])
+          .toArray(); // Convert the result to an array
+
+        res.send(result);
+      } catch (error) {
+        // Handle any errors that may occur during the aggregation
+        console.error(error);
+        res.status(500).send("An error occurred");
       }
     });
 
