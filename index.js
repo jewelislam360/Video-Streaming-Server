@@ -10,7 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nn2sj3o.mongodb.net/?retryWrites=true&w=majority`;
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nn2sj3o.mongodb.net/?retryWrites=true&w=majority`;
+
+const uri = process.env.mongodb_uri;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -27,6 +29,7 @@ async function run() {
     // await client.connect();
     const db = client.db("videoStreamingDB");
     const allMovieCollection = db.collection("allMovies");
+    const userCollection = db.collection("users");
 
     app.get("/allMovies", async (req, res) => {
       const result = await allMovieCollection.find().toArray();
