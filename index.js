@@ -28,6 +28,37 @@ async function run() {
     // await client.connect();
     const db = client.db("videoStreamingDB");
     const allMovieCollection = db.collection("allMovies");
+    const userCollection = db.collection("users");
+
+    // All User Api
+    app.get('/users', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+
+    })
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Admin'
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await userCollection.deleteOne(query);
+      console.log(result);
+      res.send(result)
+    })
 
     app.get("/allMovies", async (req, res) => {
       const result = await allMovieCollection.find().toArray();
@@ -41,6 +72,15 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+    app.get('/allMovie/:category', async (req, res) => {
+      const search = req.params.category;
+      if (search == "Animation" || search == "Action" || search == "Drama" || search == "Mystery" || search == "Adventure") {
+        const result = await allMovieCollection.find({ category: search }).toArray();
+
+        return res.send(result);
+      }
+    })
 
     //  search by text ---
     app.get("/searchName/:text", async (req, res) => {
