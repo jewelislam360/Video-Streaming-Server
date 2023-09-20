@@ -13,7 +13,7 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nn2sj3o.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
+const client = new MongoClient(process.env.uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -27,7 +27,43 @@ async function run() {
     // await client.connect();
     const db = client.db("videoStreamingDB");
     const allMovieCollection = db.collection("allMovies");
+    const userCollection = db.collection("users");
 
+    // All User Api
+    app.get('/users', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    })
+    app.get('/users/:email', async(req, res)=>{
+      const email=req.params.email;
+      const result=await userCollection.findOne({email})
+      res.send(result);
+    })
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+app.patch('/users/admin/:id', async(req, res)=>{
+  const id= req.params.id;
+  const filter={_id: new ObjectId(id)};
+  const updateDoc={
+    $set:{
+      role: 'Admin'
+    },
+  };
+  const result=await userCollection.updateOne(filter, updateDoc);
+  res.send(result);
+})
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await userCollection.deleteOne(query);
+      console.log(result);
+      res.send(result)
+    })
+
+    // All movies api
     app.get("/allMovies", async (req, res) => {
       const result = await allMovieCollection.find().toArray();
       res.send(result);
@@ -40,6 +76,12 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+    app.post('/addMovies', async(req, res)=>{
+      const movies=req.body;
+      const result=await allMovieCollection.insertOne(movies);
+      console.log(result);
+      res.send(result);
+    })
 
     //  search by text ---
     app.get("/searchName/:text", async (req, res) => {
